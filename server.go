@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"net"
-	"proto"
 )
 
 import (
@@ -40,7 +39,7 @@ func (client *Client) serve() {
 	defer client.conn.Close()
 	decoder := json.NewDecoder(client.conn)
 	for {
-		var req proto.Request
+		var req Request
 		if err := decoder.Decode(&req); err != nil {
 			client.logger.Print("cannot decode message ", "reason ", err)
 			break
@@ -56,7 +55,7 @@ func (client *Client) serve() {
 
 // handleRequest - метод обработки запроса от клиента. Он возвращает true,
 // если клиент передал команду "quit" и хочет завершить общение.
-func (client *Client) handleRequest(req *proto.Request) bool {
+func (client *Client) handleRequest(req *Request) bool {
 	switch req.Command {
 	case "quit":
 		client.respond("ok", nil)
@@ -66,7 +65,7 @@ func (client *Client) handleRequest(req *proto.Request) bool {
 		if req.Data == nil {
 			errorMsg = "data field is absent"
 		} else {
-			var O proto.TwoPoints
+			var O TwoPoints
 			if err := json.Unmarshal(*req.Data, &O); err != nil {
 				errorMsg = "malformed data field"
 			} else {
@@ -126,7 +125,7 @@ func (client *Client) handleRequest(req *proto.Request) bool {
 func (client *Client) respond(status string, data interface{}) {
 	var raw json.RawMessage
 	raw, _ = json.Marshal(data)
-	client.enc.Encode(&proto.Response{status, &raw})
+	client.enc.Encode(&Response{status, &raw})
 }
 
 func main() {
@@ -137,20 +136,20 @@ func main() {
 
 	// Разбор адреса, строковое представление которого находится в переменной addrStr.
 	if addr, err := net.ResolveTCPAddr("tcp", addrStr); err != nil {
-		log.Print("address resolution failed", "address", addrStr)
+		log.Print("address resolution failed address ", addrStr)
 	} else {
-		log.Print("resolved TCP address", "address", addr.String())
+		log.Print("resolved TCP address ", addr.String())
 
 		// Инициация слушания сети на заданном адресе.
 		if listener, err := net.ListenTCP("tcp", addr); err != nil {
-			log.Print("listening failed", "reason", err)
+			log.Print("listening failed reason ", err)
 		} else {
 			// Цикл приёма входящих соединений.
 			for {
 				if conn, err := listener.AcceptTCP(); err != nil {
-					log.Print("cannot accept connection", "reason", err)
+					log.Print("cannot accept connection reason ", err)
 				} else {
-					log.Print("accepted connection", "address", conn.RemoteAddr().String())
+					log.Print("accepted connection address ", conn.RemoteAddr().String())
 
 					// Запуск go-программы для обслуживания клиентов.
 					go NewClient(conn).serve()

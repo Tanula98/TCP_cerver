@@ -7,8 +7,6 @@ import (
 	"net"
 )
 
-import "proto"
-
 // interact - функция, содержащая цикл взаимодействия с сервером.
 func interact(conn *net.TCPConn) {
 	defer conn.Close()
@@ -25,7 +23,7 @@ func interact(conn *net.TCPConn) {
 			send_request(encoder, "quit", nil)
 			return
 		case "add":
-			var data proto.TwoPoints
+			var data TwoPoints
 
 			fmt.Printf("Ox = ")
 			fmt.Scan(&data.PointO.CordX)
@@ -43,7 +41,7 @@ func interact(conn *net.TCPConn) {
 		}
 
 		// Получение ответа.
-		var resp proto.Response
+		var resp Response
 		if err := decoder.Decode(&resp); err != nil {
 			fmt.Printf("error: %v\n", err)
 			break
@@ -86,7 +84,7 @@ func interact(conn *net.TCPConn) {
 func send_request(encoder *json.Encoder, command string, data interface{} ) {
 	var raw json.RawMessage
 	raw, _ = json.Marshal(data)
-	encoder.Encode(&proto.Request{command, &raw})
+	encoder.Encode(&Request{command, &raw})
 }
 
 func main() {
